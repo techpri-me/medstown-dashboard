@@ -33,17 +33,17 @@ export default function Admin(props) {
     }
     return activeRoute;
   };
-  const getActiveNavbar = (routes) => {
-    let activeNavbar = false;
-    for (let i = 0; i < routes.length; i++) {
-      if (
-        window.location.href.indexOf(routes[i].layout + routes[i].path) !== -1
-      ) {
-        return routes[i].secondary;
-      }
-    }
-    return activeNavbar;
-  };
+  // const getActiveNavbar = (routes) => {
+  //   let activeNavbar = false;
+  //   for (let i = 0; i < routes.length; i++) {
+  //     if (
+  //       window.location.href.indexOf(routes[i].layout + routes[i].path) !== -1
+  //     ) {
+  //       return routes[i].secondary;
+  //     }
+  //   }
+  //   return activeNavbar;
+  // };
   const getRoutes = (routes) => {
     return routes.map((prop, key) => {
       if (prop.layout === "/admin") {
@@ -68,13 +68,13 @@ export default function Admin(props) {
         >
           {/* Routes */}
           <div className="h-full">
-            <Navbar
+            {/* <Navbar
               onOpenSidenav={() => setOpen(true)}
               logoText={"Horizon UI Tailwind React"}
               brandText={currentRoute}
               secondary={getActiveNavbar(routes)}
               {...rest}
-            />
+            /> */}
             <div className="pt-5s mx-auto mb-auto h-full min-h-[84vh] p-2 md:pr-2">
               <Routes>
                 {getRoutes(routes)}

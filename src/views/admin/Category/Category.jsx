@@ -4,7 +4,7 @@ import config from "../../../config";
 import { useNavigate } from "react-router-dom";
 import { Modal, Box } from "@mui/material";
 import InputField from "components/fields/InputField";
-import Radio from "components/radio";
+
 const style = {
   position: "absolute",
   top: "50%",
@@ -16,20 +16,22 @@ const style = {
   boxShadow: 24,
   p: 4,
 };
+
 const Category = () => {
   const [open, setOpen] = useState(false);
   const [categoryName, setCategoryName] = useState("");
-  const handleClose = () => setOpen(false);
-  const handleOpen = () => setOpen(true)
+  const [newName, setNewName] = useState(""); // Add state for newName
+  const [type, setType] = useState(""); // Added for category type
+  const [gst, setGst] = useState("");   // Added for GST
+  const [discount, setDiscount] = useState(""); // Added for Discount
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
   const [data, setData] = useState([]);
+
   useEffect(() => {
     axios
-<<<<<<< main
-      .get(`${config.api}/getdiseaselist`)
-=======
-      .get('https://api.medstown.com/admin/categories')
->>>>>>> local
+      .get(`${config.api}/getdiseaselist`) // Adjust URL based on your requirement
       .then((res) => {
         setData(res.data);
       })
@@ -37,135 +39,132 @@ const Category = () => {
         console.log(err);
       });
   }, []);
-<<<<<<< main
 
-=======
   async function addCategoryHandler() {
     console.log("Adding new category");
-    const body = { name: categoryName, type: type ,gst : gst, discount:discount}
+    const body = { name: categoryName, type, gst, discount };
     const config = {
       headers: {
-        "Content-Type": "application/json"
-      }
-    }
-    if(type===""){
-      return alert("Please choose prescription type")
+        "Content-Type": "application/json",
+      },
+    };
+    if (type === "") {
+      return alert("Please choose a category type");
     }
     try {
       setLoading(true);
-      const res = await axios.post('https://api.medstown.com/admin/addNew', body, config);
+      const res = await axios.post(`${config.api}/admin/addNew`, body, config); // Adjust URL based on your requirement
       if (res.data) {
-        console.log("data --- ", data);
-      setLoading(false);
+        console.log("Category added");
+        setLoading(false);
         setSuccess(true);
-
-        setTimeout(()=>{
+        setTimeout(() => {
           setSuccess(false);
-        },3000)
+        }, 3000);
       }
     } catch (error) {
-      //  return res.send("Error Occurred - ",error) 
       console.log("Error Occurred - ", error);
       setLoading(false);
-
     }
   }
 
-
-  //prescription 
-
-  const prescription = data && data.filter(item => item.type === "prescription");
-  const nonPrescription = data && data.filter(item => item.type === "non-prescription");
-
   async function updateHandler() {
-    const body = { name: categoryName, newName: newName ,gst : gst, discount: discount};
+    const body = { name: categoryName, newName, gst, discount };
     console.log("Updating Category Details - ", body);
     try {
       setLoading(true);
-      const res = await axios.put("https://api.medstown.com/admin/editCategory", body);
+      const res = await axios.put(`${config.api}/admin/editCategory`, body); // Adjust URL based on your requirement
       if (res.data) {
         console.log("Updated category");
         setLoading(false);
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);
-        }, 3000)
+        }, 3000);
       }
     } catch (error) {
       setLoading(false);
-      console.log("Error Occurred ! - ,error");
-
+      console.log("Error Occurred - ", error);
     }
   }
-  async function deletCategoryHandler(name, type) {
-    console.log("Deleting category - " + name+" with type - "+type)
-    const body = { name : categoryName,type : type}
-    console.log("body --- ",body);
+
+  async function deleteCategoryHandler(name, type) {
+    console.log("Deleting category - " + name + " with type - " + type);
     try {
       setLoading(true);
-      const res = await axios.delete("https://api.medstown.com/admin/deleteCategoryType/"+name+"/"+type);
-      console.log("")
-      console.log("after deleting --- ",res.data);
+      const res = await axios.delete(`${config.api}/admin/deleteCategoryType/${name}/${type}`); // Adjust URL based on your requirement
       if (res.data) {
-        setLoading(false)
+        console.log("Category deleted");
+        setLoading(false);
         setSuccess(true);
-
-        setTimeout(() => { setSuccess(false) }, 3000)
+        setTimeout(() => {
+          setSuccess(false);
+        }, 3000);
       }
     } catch (error) {
       setLoading(false);
-      console.log("Error Occurred ! ", error);
+      console.log("Error Occurred - ", error);
     }
   }
->>>>>>> local
+
+  const prescription = data.filter(item => item.type === "prescription");
+  const nonPrescription = data.filter(item => item.type === "non-prescription");
+
   return (
     <div className="mt-5">
       <div className="flex justify-end">
-        <button className="bg-[#014d4d] text-white px-3 py-2 rounded-md" onClick={handleOpen}>Add Category+</button>
+        <button className="bg-[#014d4d] text-white px-3 py-2 rounded-md" onClick={() => setOpen(true)}>
+          Add Category+
+        </button>
       </div>
-      <h4 className=" text-2xl font-bold text-[#014d4d]">Non-Prescription</h4>
+      <h4 className="text-2xl font-bold text-[#014d4d]">Non-Prescription</h4>
       <div className="mt-5 flex h-full flex-row flex-wrap">
-        {data.map((item) => {
-          return (
-            <div
-              className="m-2 cursor-pointer rounded-md bg-[#CCDBDB] p-2 hover:bg-[#014d4d] hover:text-white"
-              // redirect to a component with the selected category
-              onClick={() => navigate(`/admin/subcat?${item}`)}
-            >
-              {item}
-            </div>
-          );
-        })}
+        {nonPrescription.map((item) => (
+          <div
+            key={item.id}
+            className="m-2 cursor-pointer rounded-md bg-[#CCDBDB] p-2 hover:bg-[#014d4d] hover:text-white"
+            onClick={() => navigate(`/admin/subcat?${item.id}`)} // Adjust the navigation path based on your needs
+          >
+            {item.name}
+          </div>
+        ))}
       </div>
       <div className="mt-10">
-        <h4 className=" text-2xl font-bold text-[#014d4d]">Prescription</h4>
+        <h4 className="text-2xl font-bold text-[#014d4d]">Prescription</h4>
         <div className="mt-5 flex h-full flex-row flex-wrap">
-          {data.map((item) => {
-            return (
-              <div className="m-2 cursor-pointer rounded-md bg-[#CCDBDB] p-2 hover:bg-[#014d4d] hover:text-white">
-                {item}
-              </div>
-            );
-          })}
+          {prescription.map((item) => (
+            <div key={item.id} className="m-2 cursor-pointer rounded-md bg-[#CCDBDB] p-2 hover:bg-[#014d4d] hover:text-white">
+              {item.name}
+            </div>
+          ))}
         </div>
       </div>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
+      <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
         <Box sx={style}>
           <div>
             <h4 className="text-2xl font-bold text-[#014d4d]">Add Category</h4>
             <div className="mt-5">
               <div className="flex items-center align-middle gap-5">
                 <div className="flex items-center align-middle gap-2">
-                  <input type="radio" name="category" id="prescription" className="mr-2" />
+                  <input
+                    type="radio"
+                    name="category"
+                    id="prescription"
+                    checked={type === "prescription"}
+                    onChange={() => setType("prescription")}
+                    className="mr-2"
+                  />
                   <label htmlFor="prescription">Prescription</label>
                 </div>
                 <div className="flex items-center align-middle gap-2">
-                  <input type="radio" name="category" id="non-prescription" className="mr-2" />
+                  <input
+                    type="radio"
+                    name="category"
+                    id="non-prescription"
+                    checked={type === "non-prescription"}
+                    onChange={() => setType("non-prescription")}
+                    className="mr-2"
+                  />
                   <label htmlFor="non-prescription">Non-Prescription</label>
                 </div>
               </div>
@@ -175,26 +174,32 @@ const Category = () => {
                 onChange={(e) => setCategoryName(e.target.value)}
                 placeholder="Enter Category Name"
               />
-<<<<<<< main
-=======
-
-<InputField
+              <InputField
                 label="GST"
                 value={gst}
                 onChange={(e) => setGst(e.target.value)}
                 placeholder="Enter GST Percentage"
               />
-
-<InputField
+              <InputField
                 label="Discount"
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
                 placeholder="Enter Discount Percentage"
               />
->>>>>>> local
+              <InputField
+                label="New Category Name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Enter New Category Name"
+              />
             </div>
             <div className="mt-5 flex justify-end">
-              <button className="bg-[#014d4d] text-white px-3 py-2 rounded-md">Add Category +</button>
+              <button
+                className="bg-[#014d4d] text-white px-3 py-2 rounded-md"
+                onClick={addCategoryHandler}
+              >
+                Add Category +
+              </button>
             </div>
           </div>
         </Box>

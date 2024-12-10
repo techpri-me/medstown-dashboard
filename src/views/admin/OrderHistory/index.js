@@ -1,347 +1,108 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
-import CheckTable from "components/CheckTable";
-import { columnsDataCheck } from "./variables/columnsData";
-import { Box, CardContent } from "@mui/material";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
-import Paper from "@mui/material/Paper";
-import Modal from "@mui/material/Modal";
-import { MyContext } from "Contextapi/MyContext";
 import MyLocation from "Contextapi/MyLocation";
+import TextField from "@mui/material/TextField";
+
 const OrderHistory = () => {
-  const [AllOrder, setOrderHistory] = useState([]);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const [currentRow, setCurrentRow] = useState(null);
+  const [data, setData] = useState([]);
+  const [searchText, setSearchText] = useState("");
+
   useEffect(() => {
-    getallpharmacies(pageNumber);
-  }, [pageNumber]);
+    getAllDeliveryPartners();
+  }, []);
 
-  const getallpharmacies = (page) => {
-    setLoading(true);
-    axios
-      .get(`http://localhost:7001/customer/getorders/${page}`)
-      .then((res) => {
-        setLoading(false);
-        setOrderHistory(res.data.reverse());
-      })
-      .catch((err) => {
-        console.log(err);
+  const getAllDeliveryPartners = async () => {
+    try {
+      const res = await axios.get("https://api.medstown.com/customer/getorders");
+      const orders = res.data.reverse().map(order => {
+        const {
+          orderDetails: [details],
+          ...rest
+        } = order;
+        return {
+          ...rest,
+          ...details,
+          createdAt: new Date(order.createdAt).toLocaleString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          })
+        };
       });
-  };
-
-  const handlePagination = (direction) => {
-    if (direction === "back") {
-      if (pageNumber > 1) {
-        setPageNumber(pageNumber - 1);
-        getallpharmacies(pageNumber);
-      }
-    } else {
-      setPageNumber(pageNumber + 1);
-      getallpharmacies(pageNumber);
+      setData(orders);
+    } catch (err) {
+      console.error("Error fetching orders:", err);
     }
   };
 
-  const acceptedOrders = AllOrder.filter(
-    (order) => order.status === "accepted"
+  const handleSearchTextChange = (event) => {
+    setSearchText(event.target.value);
+  };
+
+  const filteredRows = data.filter((row) =>
+    Object.values(row).some(
+      (value) =>
+        value &&
+        value.toString().toLowerCase().includes(searchText.toLowerCase())
+    )
   );
-  console.log("Accepted orders - ", acceptedOrders);
-
-  const tableColumns = [
-    { id: "orderId", label: "Order Id", minWidth: 150 },
-    { id: "userLocation", label: "User Location", minWidth: 250 },
-    {
-      id: "pharmacy Location",
-      label: "Pharmacy Location",
-      minWidth: 250,
-      align: "left",
-      format: (value) => value.toLocaleString("en-US"),
-    },
-    {
-      id: "status",
-      label: "Status",
-      minWidth: 170,
-      align: "left",
-      format: (value) => value.toLocaleString("en-US"),
-    },
-    {
-      id: "deliverycode",
-      label: "Delivery Code",
-      minWidth: 170,
-      align: "left",
-      format: (value) => value.toFixed(2),
-    },
-    // {
-    //   id: "quantity",
-    //   label: "Quantity",
-    //   minWidth: 150,
-    //   align: "left",
-    //   format: (value) => value.toFixed(2),
-    // },
-    {
-      id: "total price",
-      label: "Total Price",
-      minWidth: 170,
-      align: "left",
-      format: (value) => value.toFixed(2),
-    },
-    {
-      id: "Payment Type",
-      label: "Payment Type",
-      minWidth: 170,
-      align: "left",
-      format: (value) => value.toFixed(2),
-    },
-    {
-      id: "date",
-      label: "Date",
-      minWidth: 250,
-      align: "left",
-      format: (value) => value.toFixed(2),
-    },
-  ];
-<<<<<<< main
-  const[data,setData] = useState([
-    {
-    orderId:"7823231",
-    userLocation:"Chintal Balanagar",
-    pharmacyLocation : "Chintal, Balanagar",
-    orderTotal:1000,
-    date:"12/05/2024",
-    code:"87120",
-    status:"completed",
-    quantity:2
-  },
-  {
-    orderId:"7823231",
-    userLocation:"Chintal Balanagar",
-    pharmacyLocation : "Chintal, Balanagar",
-    orderTotal:1000,
-    date:"12/05/2024",
-    code:"87120",
-    status:"completed",
-    quantity:2
-
-  },
-  {
-    orderId:"7823231",
-    userLocation:"Near Police Station, Medchal",
-    pharmacyLocation : "Ambedkar Statue, Medchal",
-    orderTotal:1000,
-    date:"12/05/2024",
-    code:"87120",
-    status:"completed",
-    quantity:2
-
-  },
-  {
-    orderId:"7823231",
-    userLocation:"Ananadh Nagar, Hyderabad",
-    pharmacyLocation : "Ananadh Nagar, Near Birla Mandir,Hyderabad",
-    orderTotal:1000,
-    date:"12/05/2024",
-    code:"87120",
-    status:"completed",
-    quantity:2
-
-  },
-  {
-    orderId:"7823231",
-    userLocation:"Plot No. 123, Near DSNR Bus Stop, Hyderabad",
-    pharmacyLocation : "Near DSNR Metro Station, Hyderabad",
-    orderTotal:1000,
-    date:"12/05/2024",
-    code:"87120",
-    status:"completed",
-    quantity:2
-
-  }
-
-]);
-  function handleRowFunction(row){
-    console.log("clicked on row - ",row);
-    setCurrentRow(row)
-  }
-=======
-
-  function handleRowFunction(row) {
-    console.log("clicked on row - ", row);
-    setCurrentRow(row);
-  }
-
-  const { dataorder } = useContext(MyContext);
-
-  const [pharmacy, setPharmacy] = useState([]);
-  console.log(pharmacy);
-
-  // console.log(dataorder)
-
-  // const res = dataorder?.map( async (item)=> {
-  //     const customer =   await axios.get(`https://api.medstown.com/pharmacy/getPharmacy/${item.pharmacyId}`)
-  //     setPharmacy(customer.data)
-  // })
->>>>>>> local
 
   return (
-    <div className="mt-8">
-      <div>
-        <TableContainer component={Paper}>
-<<<<<<< main
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
+    <div>
+      <div className="mt-5 grid h-full grid-cols-1 gap-5 md:grid-cols-1">
+        <TextField
+          label="Search"
+          variant="outlined"
+          fullWidth
+          value={searchText}
+          onChange={handleSearchTextChange}
+        />
 
-
-        {/* <TableHead>
-          <TableRow>
-            <TableCell>Order Id</TableCell>
-            <TableCell align="left" width={150}>User Location</TableCell>
-            <TableCell align="left" width={150}>Pharmacy Location</TableCell>
-            <TableCell align="left" width={150}>Status</TableCell>
-            <TableCell align="left" width={150}>Delivery Code</TableCell>
-            <TableCell align="left" width={150}>Quantity</TableCell>
-            <TableCell align="left" width={150}>Total Price</TableCell>
-            <TableCell align="left" width={150}>Date</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {pendingData && pendingData.map((row) => (
-            <TableRow
-              key={row.name}
-              sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-            >
-              <TableCell component="th" scope="row">
-                {row.name}
-              </TableCell>
-            
-
-              {checkAll(row) ? <>
-
-                <TableCell align="left" width={150}>{row.orderId}</TableCell>
-              <TableCell align="left" width={150}>{checkNull(row.userLat,row.userLang) ? row.userLat+","+row.userLang:""}</TableCell>
-              <TableCell align="left" width={150}>{checkNull(row.pharmacyLat,row.pharmacyLang) ? row.pharmacyLat+","+row.pharmacyLang:""}</TableCell>
-              <TableCell align="left" width={150}>1023</TableCell>
-              <TableCell align="left" width={150}>{checkNull(row.quantity) ? row.quantity : ''}</TableCell>
-              <TableCell align="left" width={150}>{checkNull(row.totalPrice) ? row.totalPrice  :""}</TableCell>
-              <TableCell align="left" width={150}>{checkNull(row.status) ? row.status :''}</TableCell>
-              <TableCell align="left" width={150}>{row.createdAt}</TableCell>
-              </> : <></>}
-            </TableRow>
-          ))}
-        </TableBody> */}
-
-
-
-
-
-
-
-        <TableHead>
-            <TableRow>
-              {tableColumns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  {column.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data
-              .map((row,index) => {
-=======
-          <Table sx={{ minWidth: 650 }} aria-label="simple table">
-            <TableHead>
-              <TableRow>
-                {tableColumns &&
-                  tableColumns?.map((column) => (
-                    <TableCell
-                      key={column.id}
-                      align={column.align}
-                      style={{ minWidth: column.minWidth, fontWeight: "bold" }}
-                    >
-                      {column.label}
-                    </TableCell>
-                  ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {dataorder?.map((row, index) => {
->>>>>>> local
-                return (
-                  <TableRow
-                    hover
-                    role="checkbox"
-                    tabIndex={-1}
-                    key={row.code}
-                    onClick={() => handleRowFunction(row)}
-                  >
-                    <TableCell style={{ width: 150 }} align="left">
-                      {row.orderId}
-                    </TableCell>
-                    <TableCell style={{ width: 250 }} align="left">
-                      <MyLocation
-                        latitude={row?.userLat}
-                        longitude={row?.userLng}
-                      />
-                    </TableCell>
-                    <TableCell style={{ width: 250 }} align="left">
-                      {/* {row.pharmacyLocation} */}
-                      <MyLocation
-                        latitude={row?.pharmacyLng}
-                        longitude={row?.pharmacyLat}
-                      />
-                    </TableCell>
-                    <TableCell style={{ width: 150 }} align="left">
-                      {row.status}
-                    </TableCell>
-                    <TableCell style={{ width: 150 }} align="left">
-                      {" "}
-                      {row.otpValue}
-                    </TableCell>
-                    {/* <TableCell style={{ width: 150 }} align="left">
-                      {row.quantity}
-                    </TableCell> */}
-                    <TableCell style={{ width: 150 }} align="left">
-                      {row.totalPrice}
-                    </TableCell>
-                    <TableCell style={{ width: 150 }} align="left">
-                      {row.paymentType}
-                    </TableCell>
-                    <TableCell style={{ width: 150 }} align="left">
-                      {new Date(row.createdAt).toDateString()}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <div className="mt-4 flex items-center justify-end gap-5">
-          <p className="font-semibold">
-            Page No: {!loading ? pageNumber : "_"}
-          </p>
-          <button
-            disabled={loading ? true : false}
-            className="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700"
-            onClick={() => handlePagination("back")}
-          >
-            Back
-          </button>
-          <button
-            disabled={loading ? true : false}
-            className="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700"
-            onClick={() => handlePagination("next")}
-          >
-            Next
-          </button>
-        </div>
+        <DataGrid
+          rows={filteredRows}
+          columns={[
+            { field: "orderId", headerName: "Order Id", minWidth: 150 },
+            {
+              field: "userLat",
+              headerName: "User Location",
+              width: 400,
+              renderCell: (params) => (
+                <MyLocation
+                  latitude={params.row.userLat}
+                  longitude={params.row.userLng}
+                />
+              ),
+            },
+            {
+              field: "pharmacyLat",
+              headerName: "Pharmacy Location",
+              width: 400,
+              renderCell: (params) => (
+                params.row.pharmacyLat && params.row.pharmacyLng ? (
+                  <MyLocation
+                    latitude={params.row.pharmacyLat}
+                    longitude={params.row.pharmacyLng}
+                  />
+                ) : "N/A"
+              ),
+            },
+            { field: "status", headerName: "Status", minWidth: 170 },
+            { field: "totalPrice", headerName: "Total Price", minWidth: 170 },
+            { field: "createdAt", headerName: "Date", minWidth: 250 },
+          ]}
+          pageSize={5}
+          rowsPerPageOptions={[5]}
+          disableSelectionOnClick
+          sx={{ width: "100%" }}
+          getRowId={(row) => row.orderId} // Ensure 'orderId' is unique
+          components={{
+            Toolbar: GridToolbar,
+          }}
+        />
       </div>
     </div>
   );

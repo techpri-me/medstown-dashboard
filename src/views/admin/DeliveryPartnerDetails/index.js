@@ -1,54 +1,142 @@
-<<<<<<< main
-import { DataGrid } from "@mui/x-data-grid";
-import React, { useState } from "react";
-import { tableColumns, tableData } from "./variables";
-import { TextField } from "@mui/material";
-
-const DeliveryPartnerDetails = () => {
-  const [searchText, setSearchText] = useState("");
-
-  const handleSearchTextChange = (event) => {
-    setSearchText(event.target.value);
-  };
-
-=======
 import React, { useEffect, useState } from "react";
-import { DataGrid } from "@mui/x-data-grid";
-import { TextField } from "@mui/material";
+import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import axios from "axios";
+import Modal from "@mui/material/Modal";
+import Box from "@mui/material/Box";
+import InputField from "components/fields/InputField";
+import { BiPencil } from "react-icons/bi";
+import { AiFillDelete } from "react-icons/ai";
+import { TextField, Button, Alert } from "@mui/material";
 
-const DelivaryDetails = () => {
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 1000,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+  height: "80vh",
+  overflowY: "scroll",
+};
+
+const deleteModalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 500,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+  height: 200,
+  overflowY: "scroll",
+};
+
+const DeliveryDetails = () => {
+  const [data, setData] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [storeParams, setStoreParams] = useState(null);
   const [searchText, setSearchText] = useState("");
-  const [tableData, setTableData] = useState([]);
-  const [pageSize, setPageSize] = useState(10);
 
-  const handleSearchTextChange = (event) => {
-    setSearchText(event.target.value);
-  };
-
-  const fetchData = async () => {
-    try {
-      const res = await axios.get("https://api.medstown.com/delivery/getalldeliveryboy");
-      console.log("API Response:", res.data);
-      setTableData(res.data || []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
+  // State for Delivery Partner Details
+  const [deliveryDetails, setDeliveryDetails] = useState({
+    partnerId: "",
+    fullname: "",
+    phone: "",
+    vehicleNumber: "",
+    drivingLicense: "",
+    address: "",
+  });
 
   useEffect(() => {
-    fetchData();
+    getAllDeliveryPartners();
   }, []);
 
->>>>>>> local
-  const filteredRows = tableData.filter((row) =>
+  const getAllDeliveryPartners = () => {
+    axios
+      .get(`https://api.medstown.com/delivery/getalldeliveryboy`)
+      .then((res) => {
+        // Add _id as id for DataGrid
+        const rows = res.data.map(item => ({
+          ...item,
+          id: item._id
+        }));
+        setData(rows);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  };
+
+  const handleSearchTextChange = (event) => {
+    setSearchText(event.target.value);
+  };
+
+  const handleClose = () => setOpen(false);
+  const handleDeleteClose = () => setDeleteOpen(false);
+  const handleDeleteOpen = (partnerId) => {
+    setDeleteOpen(true);
+    setStoreParams(partnerId);
+  };
+
+  const handleEditDeliveryPartner = (row) => {
+    setOpen(true);
+    setDeliveryDetails({
+      partnerId: row.partnerId,
+      fullname: row.fullname,
+      phone: row.phone,
+      vehicleNumber: row.vehicleNumber,
+      drivingLicense: row.drivingLicense,
+      address: row.address,
+    });
+  };
+
+  console.log(deliveryDetails)
+
+  const handleSubmitDetails = () => {
+    
+    axios.put
+      (
+        `https://api.medstown.com/delivery/updatedeliveryuser/${deliveryDetails.partnerId}`,
+        deliveryDetails
+      )
+      .then(() => {
+        console.log("gg")
+        getAllDeliveryPartners();
+        handleClose();
+      })
+      .catch((err) => {
+        console.error(err);
+
+      });
+  };
+
+  const handleDeleteDeliveryPartner = (partnerId) => {
+    axios
+      .get(`https://api.medstown.com/delivery/deletedelvaryuser/${partnerId}`)
+      .then(() => {
+        getAllDeliveryPartners();
+        handleDeleteClose();
+      })
+      .catch((err) => {
+        console.error(err);
+        handleDeleteClose();
+      });
+  };
+
+  const filteredRows = data.filter((row) =>
     Object.values(row).some(
       (value) =>
         value &&
         value.toString().toLowerCase().includes(searchText.toLowerCase())
     )
   );
-<<<<<<< main
+
   return (
     <div>
       <div className="mt-5 grid h-full grid-cols-1 gap-5 md:grid-cols-1">
@@ -62,113 +150,201 @@ const DelivaryDetails = () => {
 
         <DataGrid
           rows={filteredRows}
-          columns={tableColumns}
+          columns={[
+            { field: "partnerId", headerName: "ID", width: 200 },
+            { field: "fullname", headerName: "Name", width: 200 },
+            { field: "phone", headerName: "Contact", width: 150 },
+            {
+              field: "vehicleNumber",
+              headerName: "Vehicle Number",
+              width: 150,
+            },
+            {
+              field: "drivingLicense",
+              headerName: "Driving License No.",
+              width: 250,
+            },
+            { field: "totalBalance", headerName: "Total Balance", width: 150 },
+            {
+              field: "BankDetails.bankName",
+              headerName: "Bank Name",
+              width: 150,
+            },
+            {
+              field: "BankDetails.accountNumber",
+              headerName: "Bank A/C",
+              width: 150,
+            },
+            {
+              field: "BankDetails.ifscCode",
+              headerName: "IFSC Code",
+              width: 150,
+            },
+            {
+              field: "BankDetails.branchName",
+              headerName: "Branch Name",
+              width: 150,
+            },
+            {
+              field: "BankDetails.accountHolderName",
+              headerName: "Bank Account",
+              width: 150,
+            },
+            {
+              field: "Action",
+              headerName: "Action",
+              width: 200,
+              renderCell: (params) => (
+                <div className="flex items-center">
+                  <BiPencil
+                    size={18}
+                    onClick={() => handleEditDeliveryPartner(params.row)}
+                    className="mr-7 cursor-pointer hover:text-blue-500"
+                  />
+                  <AiFillDelete
+                    size={18}
+                    onClick={() => handleDeleteOpen(params.row.partnerId)}
+                    className="mr-7 cursor-pointer hover:text-red-500"
+                  />
+                </div>
+              ),
+            },
+          ]}
           pageSize={5}
           rowsPerPageOptions={[5]}
           disableSelectionOnClick
           sx={{ width: "100%" }}
-          getRowId={(row) => row._id}
-          //   onRowClick={(row) => {
-          //     handleOpen(row.id);
-          //   }}
-=======
-
-  const renderDocumentCell = (doc) => {
-    return doc ? (
-      <img
-        src={doc}
-        alt="Document"
-        style={{ width: 50, height: 50, marginRight: 5 }}
-      />
-    ) : (
-      <span>N/A</span>
-    );
-  };
-
-  const columns = [
-    { field: "partnerId", headerName: "ID", width: 90 },
-    { field: "fullname", headerName: "Name", width: 250 },
-    { field: "phone", headerName: "Contact", width: 150 },
-    { field: "vehicleNumber", headerName: "Vehicle Number", width: 150 },
-    { field: "drivingLicense", headerName: "Driving License No.", width: 150 },
-    {
-      field: "BankDetails?.bankName",
-      headerName: "Bank Name",
-      width: 150,
-    },
-    {
-      field: "BankDetails?.accountNumber",
-      headerName: "Bank A/C",
-      width: 150,
-    },
-    {
-      field: "BankDetails?.ifscCode",
-      headerName: "IFSC Code",
-      width: 150,
-    },
-    {
-      field: "BankDetails?.branchName",
-      headerName: "Branch Name",
-      width: 150,
-    },
-    {
-      field: "BankDetails?.accountHolderName",
-      headerName: "Bank Account",
-      width: 150,
-    },
-    { field: "totalBalance", headerName: "Total Balance", width: 150 },
-    {
-      field: "documnetUploaded",
-      headerName: "Documents",
-      width: 300,
-      renderCell: (params) => (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {params.value.map((doc, index) => (
-            <div key={index} style={{ marginBottom: "5px" }}>
-              {renderDocumentCell(doc.userImage)}
-              {renderDocumentCell(doc.penCard)}
-              {renderDocumentCell(doc.adharFront)}
-              {renderDocumentCell(doc.adharBack)}
-              {renderDocumentCell(doc.rcFront)}
-              {renderDocumentCell(doc.rcBack)}
-              {renderDocumentCell(doc.drivingLicenseFront)}
-              {renderDocumentCell(doc.drivingLicenseBack)}
-            </div>
-          ))}
-        </div>
-      ),
-    },
-    // Add more columns as needed
-  ];
-
-  return (
-    <div className="m-5 mt-10">
-      <TextField
-        label="Search"
-        variant="outlined"
-        fullWidth
-        value={searchText}
-        onChange={handleSearchTextChange}
-        className="mb-4"
-      />
-      <div style={{ height: 400, width: "100%" }}>
-        <DataGrid
-          rows={filteredRows}
-          columns={columns}
-          pageSize={pageSize}
-          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-          rowsPerPageOptions={[5, 10, 20]}
-          pagination
-          getRowId={(row) => row._id} // Specify _id as the unique identifier
->>>>>>> local
+          getRowId={(row) => row.id} // Ensure this matches the id field you set
+          components={{
+            Toolbar: GridToolbar,
+          }}
         />
       </div>
+
+      {/* Edit Delivery Partner Modal */}
+      <Modal
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={modalStyle}>
+          <div className="sticky -top-10 z-50 mb-5 flex h-14 items-center justify-between bg-white px-1">
+            <h4 className="text-2xl font-bold">Edit Delivery Partners</h4>
+          </div>
+          <div className="grid grid-cols-2 gap-5">
+            <InputField
+              label="PartnerId"
+              value={deliveryDetails.partnerId}
+              onChange={(e) =>
+                setDeliveryDetails({
+                  ...deliveryDetails,
+                  partnerId: e.target.value,
+                })
+              }
+            />
+            <InputField
+              label="Full Name"
+              value={deliveryDetails.fullname}
+              onChange={(e) =>
+                setDeliveryDetails({
+                  ...deliveryDetails,
+                  fullname: e.target.value,
+                })
+              }
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-5">
+            <InputField
+              label="Phone No."
+              value={deliveryDetails.phone}
+              onChange={(e) =>
+                setDeliveryDetails({
+                  ...deliveryDetails,
+                  phone: e.target.value,
+                })
+              }
+            />
+            <InputField
+              label="Vehicle Number"
+              value={deliveryDetails.vehicleNumber}
+              onChange={(e) =>
+                setDeliveryDetails({
+                  ...deliveryDetails,
+                  vehicleNumber: e.target.value,
+                })
+              }
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-5">
+            <InputField
+              label="Driving License No"
+              value={deliveryDetails.drivingLicense}
+              onChange={(e) =>
+                setDeliveryDetails({
+                  ...deliveryDetails,
+                  drivingLicense: e.target.value,
+                })
+              }
+            />
+            <InputField
+              label="Address"
+              value={deliveryDetails.address}
+              onChange={(e) =>
+                setDeliveryDetails({
+                  ...deliveryDetails,
+                  address: e.target.value,
+                })
+              }
+            />
+          </div>
+          <Box className="flex justify-end">
+            <Button
+              onClick={handleSubmitDetails}
+              variant="contained"
+              color="primary"
+              className="mr-2"
+            >
+              Save
+            </Button>
+            <Button
+              onClick={handleClose}
+              variant="outlined"
+              color="secondary"
+            >
+              Cancel
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Delete Delivery Partner Modal */}
+      <Modal
+        open={deleteOpen}
+        onClose={handleDeleteClose}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box sx={deleteModalStyle}>
+          <h4 className="text-2xl font-bold">Delete Delivery Partner</h4>
+          <p>Are you sure you want to delete this delivery partner?</p>
+          <Box className="flex justify-end mt-4">
+            <Button
+              onClick={() => handleDeleteDeliveryPartner(storeParams)}
+              variant="contained"
+              color="error"
+              className="mr-2"
+            >
+              Delete
+            </Button>
+            <Button onClick={handleDeleteClose} variant="outlined">
+              Cancel
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
     </div>
   );
 };
 
-<<<<<<< main
-export default DeliveryPartnerDetails;
-=======
-export default DelivaryDetails;
->>>>>>> local
+export default DeliveryDetails;

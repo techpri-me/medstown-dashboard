@@ -11,6 +11,9 @@ import {
   MdOutlineShoppingBasket,
   MdOutlineShoppingCart,
   MdOutlineWallpaper,
+  TbMapPinCode,
+  MdAddLocation,
+  MdAddBusiness
   
 } from "react-icons/md";
 import { FaUsers } from "react-icons/fa";
@@ -30,6 +33,8 @@ import DeliveryPartnerDetails from "views/admin/DeliveryPartnerDetails";
 import WalletDetails from "views/admin/WalletDetails";
 import PharmacyPayoutReq from "views/admin/PharmacyPayoutReq";
 import DeliveryPayoutReq from "views/admin/Delivery Payout Req";
+import PincodeSrc from "views/admin/Dashboard/PincodeSrc";
+import ReferPharmacy from "views/admin/newScreen/ReferPharmacy";
 const routes = [
   {
     name: "Main Dashboard",
@@ -39,46 +44,38 @@ const routes = [
     component: <Dashboard />,
   },
   {
-    name: "Medicines", //"Partners",
-    layout: "/admin",
-    path: "partners",
-    icon: <MdHealthAndSafety className="h-6 w-6" />,
-    component: <Partners />,
-  },
-  {
-    name: "Pharmacies", //"SaleForce
-    layout: "/admin",
-    path: "saleForce",
-    icon: <MdStore className="h-6 w-6" />,
-    component: <SaleForce />,
-  },
-  {
-    name: "Delivery Boys Location", //"Delivery
-    layout: "/admin",
-    path: "delivery",
-    icon: <MdOutlinePedalBike className="h-6 w-6" />,
-    component: <Delivery />,
-  },
-  {
     name: "Open Orders", //"OpenOrders
     layout: "/admin",
     path: "open-orders",
     icon: <MdOutlineDepartureBoard className="h-6 w-6" />,
     component: <OpenOrders />,
+    private: true, // Protected route
   },
+
   {
     name: "Orders History", //"OrderHistory
     layout: "/admin",
     path: "orders-history",
     icon: <MdOutlineDepartureBoard className="h-6 w-6" />,
     component: <OrderHistory />,
+    private: true, // Protected route
   },
+  {
+    name: "Payments Details", //"Sales
+    layout: "/admin",
+    path: "sales",
+    icon: <MdOutlineShoppingBasket className="h-6 w-6" />,
+    component: <Sales />,
+    private: true, // Protected route
+  },
+
   {
     name: "Pharmacy Payout Req", //"OrderHistory
     layout: "/admin",
     path: "pharmacy-payout-req",
     icon: <MdOutlineDepartureBoard className="h-6 w-6" />,
     component: <PharmacyPayoutReq />,
+    
   },
   {
     name: "Delivery Payout Req", //"OrderHistory
@@ -88,18 +85,11 @@ const routes = [
     component: <DeliveryPayoutReq />,
   },
   {
-    name: "Sales", //"Sales
+    name: "Pharmacy Partner", //"SaleForce
     layout: "/admin",
-    path: "sales",
-    icon: <MdOutlineShoppingBasket className="h-6 w-6" />,
-    component: <Sales />,
-  },
-  {
-    name: "User Details", //"UserDetails
-    layout: "/admin",
-    path: "user-details",
-    icon: <FaUsers className="h-6 w-6" />,
-    component: <UserDetails />,
+    path: "saleForce",
+    icon: <MdStore className="h-6 w-6" />,
+    component: <SaleForce />,
   },
   {
     name: "Pharmacy Details", //"PharmacyDetails
@@ -109,6 +99,22 @@ const routes = [
     component: <PharmacyDetails />,
   },
   {
+    name: "ReferPharmacy",
+    layout: "/admin",
+    path: "referPharmacy",
+    icon: <MdAddBusiness className="h-6 w-6" />,
+    component: <ReferPharmacy/>,
+    style: { display: "none" },
+  },
+
+  {
+    name: "Delivery Boys Location", //"Delivery
+    layout: "/admin",
+    path: "delivery",
+    icon: <MdOutlinePedalBike className="h-6 w-6" />,
+    component: <Delivery />,
+  },
+  {
     name: "Delivery Partner Details", //"DeliveryPartnerDetails
     layout: "/admin",
     path: "delivery-partner-details",
@@ -116,27 +122,70 @@ const routes = [
     component: <DeliveryPartnerDetails />,
   },
   {
-    name: "Wallet Details", //"WalletDetails
+    name: "Medicines", //"Partners",
     layout: "/admin",
-    path: "wallet-details",
-    icon: <MdOutlineWallpaper className="h-6 w-6" />,
-    component: <WalletDetails />,
+    path: "partners",
+    icon: <MdHealthAndSafety className="h-6 w-6" />,
+    component: <Partners />,
   },
+
   {
-    name: "Catories", //"SaleForce
+    name: "User Details", //"UserDetails
     layout: "/admin",
-    path: "category",
-    icon: <MdCategory className="h-6 w-6" />,
-    component: <Category />,
+    path: "user-details",
+    icon: <FaUsers className="h-6 w-6" />,
+    component: <UserDetails />,
   },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // {
+  //   name: "Payments Details", //"WalletDetails
+  //   layout: "/admin",
+  //   path: "wallet-details",
+  //   icon: <MdOutlineWallpaper className="h-6 w-6" />,
+  //   component: <WalletDetails />,
+  // },
+  // {
+  //   name: "Catories", //"SaleForce
+  //   layout: "/admin",
+  //   path: "category",
+  //   icon: <MdCategory className="h-6 w-6" />,
+  //   component: <Category />,
+  // },
+
+
+  // {
+  //   name: "subcat",
+  //   layout: "/admin",
+  //   path: "subcat",
+  //   icon: <MdOutlineShoppingCart className="h-6 w-6" />,
+  //   component: <Subcat />,
+  //   style: { display: "none" },
+  // },
+ 
   {
-    name: "subcat",
+    name: "Pincode",
     layout: "/admin",
-    path: "subcat",
-    icon: <MdOutlineShoppingCart className="h-6 w-6" />,
-    component: <Subcat />,
+    path: "Pincode",
+    icon: <MdAddLocation className="h-6 w-6" />,
+    component: <PincodeSrc  />,
     style: { display: "none" },
   },
+ 
   {
     name: "Logout",
     layout: "/auth",

@@ -1,27 +1,32 @@
 import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
-import config from "../../../config";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination, Navigation } from "swiper";
-import "swiper/css";
-import "swiper/css/autoplay";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import "swiper/css/scrollbar";
 import Modal from "@mui/material/Modal";
-import { TextField,Button,Dialog ,DialogActions,DialogContent,DialogContentText,DialogTitle} from "@mui/material";
-import AddMedicineForm from "./components/AddMedicineForm";
-const BACKEND_API_URL = "http://localhost:7001"
-;
+import {
+  TextField,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloseIcon from "@mui/icons-material/Close";
+import AddMedicineForm from "./components/AddMedicineForm"; // Ensure this component includes image upload logic
+
+const BACKEND_API_URL = "https://api.medstown.com";
+
 const style = {
   position: "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: 1000,
+  width: 1200,
   bgcolor: "background.paper",
   border: "2px solid #000",
   boxShadow: 24,
@@ -29,321 +34,299 @@ const style = {
 };
 
 const Partners = () => {
-  const [data, setData] = useState([]);
-  const [hundreds, setHundreds] = useState(100);
-  const [open, setOpen] = React.useState(false);
+  const [medicines, setMedicines] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [rowsPerPage] = useState(5);
+  const [open, setOpen] = useState(false);
   const [modalData, setModalData] = useState({});
   const [searchText, setSearchText] = useState("");
-  const[showModal,setShowModal] = useState(false);
-  const[isUpdateModal,setIsUpdateModal] = useState(false);
-  const[showDialog,setShowDialog] = useState(false);
-  const[isDeleted,setIsDeleted] = useState(false);
-  const[loading,setLoading] = useState(false)
-  const handleSearchTextChange = (event) => {
-    setSearchText(event.target.value);
-  };
+  const [showModal, setShowModal] = useState(false);
+  const [isUpdateModal, setIsUpdateModal] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const filteredRows = data.filter((row) =>
-    Object.values(row).some(
-      (value) =>
-        value &&
-        value.toString().toLowerCase().includes(searchText.toLowerCase())
-    )
-  );
-
-  const handleClose = () => setOpen(false);
   useEffect(() => {
-    const obj = {
-      offset: 100,
-    };
-    axios
-      .post(`${config.api}/getallmeds`, obj)
-      .then((res) => {
-        setData(res.data.reverse());
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
+    showMedicine(currentPage, rowsPerPage);
+  }, [currentPage, rowsPerPage]);
 
-  const incHundreds = () => {
-    const obj = {
-      offset: hundreds + 100,
-    };
-    axios
-      .post(`${config.api}/getallmeds`, obj)
-      .then((res) => {
-        setData(res.data.reverse());
-        setHundreds(hundreds + 100);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+  const showMedicine = async (page, limit) => {
+    try {
+      const res = await axios.get(
+        `${BACKEND_API_URL}/admin/getallmeds?page=${page}&limit=${limit}`
+      );
+      setMedicines(Array.isArray(res.data.medicines) ? res.data.medicines : []);
+      setTotalPages(res.data.totalPages);
+    } catch (error) {
+      console.error("Error fetching medicines:", error);
+    }
   };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const handleSearchTextChange = async (event) => {
+    const searchValue = event.target.value;
+    setSearchText(searchValue);
+
+    if (searchValue.trim() === "") {
+      showMedicine(currentPage, rowsPerPage);
+      return;
+    }
+
+    try {
+      const res = await axios.post(`${BACKEND_API_URL}/admin/searchmedicine`, {
+        search: searchValue,
+      });
+      setMedicines(res.data);
+    } catch (error) {
+      console.error("Error during search:", error);
+    }
+  };
+
   const handleOpen = (id) => {
-    const obj = {
-      id: id,
-    };
     axios
-      .post(`${config.api}/getmedbyid`, obj)
+      .post(`${BACKEND_API_URL}/admin/getmedbyid`, { id })
       .then((res) => {
-        console.log(res.data);
         setModalData(res.data);
         setOpen(true);
       })
-      .catch((err) => {
-        console.log(err);
-      });
+      .catch((err) => console.error("Error fetching medicine details:", err));
   };
-  function addMedicineHandler(){
-    //modal
+
+  const addMedicineHandler = () => {
     setShowModal(true);
     setIsUpdateModal(false);
+    setModalData({});
+  };
 
-  }
-
-  function updateCurrentMedicineHandler(data){
-    console.log("Current Medicine Data - ",data);
+  const updateCurrentMedicineHandler = (data) => {
     setShowModal(true);
     setIsUpdateModal(true);
+    setModalData(data);
+  };
 
-  }
-
-  function deleteCurrentMedicineHandler(data){
+  const deleteCurrentMedicineHandler = (data) => {
+    setModalData(data);
     setShowDialog(true);
-  }
-  async function deleteConfirmHandler(){
+  };
+
+  const deleteConfirmHandler = async () => {
     setLoading(true);
-      console.log("You want to delete medicine with id - ",modalData.medicineId);
-      console.log(modalData);
-      const medicineId = modalData.medicineId;
+    try {
+      await axios.delete(
+        `${BACKEND_API_URL}/admin/deletemedicine/${modalData.medicineId}`
+      );
+      setLoading(false);
+      setShowDialog(false);
+      setOpen(false);
+      showMedicine(currentPage, rowsPerPage);
+    } catch (error) {
+      console.error("Error during deletion:", error);
+      setLoading(false);
+    }
+  };
 
-      // backend logic
-     try {
-      const response = await axios.delete(BACKEND_API_URL+"/admin/deleteMedicine/"+medicineId);
-      if(response.data.medicineId){
-        setIsDeleted(true);
-        setLoading(false);
-      }
-     } catch (error) {
-      console.log("Error Occurred - ",error.message);
-        setLoading(false);
+  const handleClose = () => setShowModal(false);
 
-     }
-  }
   return (
     <div>
-        <div className="flex justify-end gap-5 my-5">
-          <button className="rounded bg-green-500 py-2 px-4 font-bold text-white hover:bg-green-700"
-          onClick={addMedicineHandler}>
-            Add Medicine
-          </button>
-          
-        </div>
-{/* modal start */}
-<Modal
+      <div className="my-5 flex justify-end gap-5">
+        <Button
+          variant="contained"
+          color="success"
+          onClick={addMedicineHandler}
+        >
+          Add Medicine
+        </Button>
+      </div>
+
+      <Modal
         open={showModal}
-        onClose={()=>setShowModal(false)}
+        onClose={() => setShowModal(false)}
         aria-labelledby="spring-modal-title"
         aria-describedby="spring-modal-description"
       >
-        <Box sx={{ ...style, width: 500,height:600,overflowY:"scroll" }}>
-          <h2 id="parent-modal-title">ADD MEDICINE</h2>
-          <AddMedicineForm updateModal={isUpdateModal} modalData = {modalData}/>
+        <Box sx={{ ...style, width: 1200 }}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h6" mb={2}>
+              {isUpdateModal ? "Update Medicine" : "Add Medicine"}
+            </Typography>
+            <IconButton color="primary" onClick={handleClose}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          <Box display="flex" flexDirection="row" p={2} maxHeight="650px">
+            <Box
+              flex={1}
+              p={2}
+              borderRight="1px solid #ddd"
+              display="flex"
+              flexDirection="column"
+              overflow="auto"
+            >
+              <AddMedicineForm
+                updateModal={isUpdateModal}
+                modalData={modalData}
+              />
+            </Box>
+            <Box
+              flex={1}
+              p={2}
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <Typography variant="h6" mb={2}>
+                Medicine Images
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  overflowY: "auto",
+                  maxHeight: "650px",
+                }}
+              >
+                {modalData?.medicineImage?.map((item, index) => (
+                  <img
+                    key={index}
+                    src={item}
+                    alt={`Medicine Image ${index + 1}`}
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "400px",
+                      objectFit: "contain",
+                      marginBottom: "10px",
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+          </Box>
         </Box>
       </Modal>
-{/* modal end */}
 
-
-{/* Dialog starts */}
-<Dialog
+      <Dialog
         open={showDialog}
-        onClose={()=> setShowDialog(false)}
+        onClose={() => setShowDialog(false)}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-      {loading ? <>
-        <DialogContent>
-          <DialogContentText>
-            Loading... Hang on!
-          </DialogContentText>
-        </DialogContent>
-      </>:<>
-        {isDeleted ? <>
-         <DialogTitle id="alert-dialog-title">
-          {"Medicine Delted Successfully"}
-        </DialogTitle>
-      </>:<>
-       <div>
-          <DialogTitle id="alert-dialog-title">
-          {"Are you sure? You want delete this medicine"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Once you delete you can not undo.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={()=>setShowDialog(false)}>Cancel</Button>
-          <Button onClick={deleteConfirmHandler} autoFocus>
-            Ok
-          </Button>
-        </DialogActions>
-      </div></>}
-      </>}
+        {loading ? (
+          <DialogContent>
+            <DialogContentText>Loading... Hang on!</DialogContentText>
+          </DialogContent>
+        ) : (
+          <>
+            <DialogTitle id="alert-dialog-title">
+              Are you sure you want to delete this medicine?
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText id="alert-dialog-description">
+                Once deleted, this action cannot be undone.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowDialog(false)}>Cancel</Button>
+              <Button onClick={deleteConfirmHandler} autoFocus>
+                Ok
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
-{/* Dialog ends */}
-      <div className="mt-5 grid h-full grid-cols-1 gap-5 md:grid-cols-1">
-        <TextField
-          label="Search"
-          variant="outlined"
-          fullWidth
-          value={searchText}
-          onChange={handleSearchTextChange}
-        />
-        <DataGrid
-          rows={filteredRows}
-          columns={[
-            { field: "medicineName", headerName: "Medicine Name", width: 200 },
-            {
-              field: "medicineCompany",
-              headerName: "Medicine Company",
-              width: 200,
-            },
-            {
-              field: "medicinePrice",
-              headerName: "Price",
-              width: 100,
-              renderCell: (params) => (
-                <div>₹ {params.value === null ? 0 : params.value}</div>
-              ),
-            },
-            {
-              field: "disease",
-              headerName: "Category",
-              width: 200,
-            },
-            {
-              field: "rxRequired",
-              headerName: "Rx Required",
-              width: 100,
-            },
-            {
-              field: "type",
-              headerName: "Type",
-              width: 200,
-            },
-          ]}
-          pageSize={5}
-          rowsPerPageOptions={[5]}
-          disableSelectionOnClick
-          sx={{ width: "100%" }}
-          getRowId={(row) => row._id}
-          onRowClick={(row) => {
-            handleOpen(row.id);
-          }}
-        />
-        <div className="flex justify-end gap-5">
-          <button className="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700">
-            Back
-          </button>
-          <button
-            className="rounded bg-blue-500 py-2 px-4 font-bold text-white hover:bg-blue-700"
-            onClick={incHundreds}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <Box sx={style}>
-          <div className="flex">
-            <Swiper
-              spaceBetween={50}
-              slidesPerView={1}
-              onSlideChange={() => console.log("slide change")}
-              onSwiper={(swiper) => console.log(swiper)}
-              modules={[Autoplay, Pagination, Navigation]}
-              autoplay={{
-                delay: 2500,
-                disableOnInteraction: false,
-              }}
-              className="mb-5 flex w-1/2 justify-center"
-            >
-              {modalData.medicineImage &&
-                modalData.medicineImage.map((item, index) => {
-                  return (
-                    <SwiperSlide key={index}>
-                      <img
-                        src={item}
-                        alt="medicine"
-                        height={400}
-                        width={400}
-                        className="object-contain"
-                      />
-                    </SwiperSlide>
-                  );
-                })}
-            </Swiper>
-            <div className="w-1/2">
-              <h4 className="text-xl font-bold">{modalData.medicineName}</h4>
-              <div className="mt-20 flex gap-5">
-                <div>
-                  <p className="text-xl">
-                    Company Name :{" "}
-                    <span className="font-bold">
-                      {modalData.medicineCompany}
-                    </span>
-                  </p>
-                  <p className="text-xl">
-                    Price :{" "}
-                    <span className="font-bold">
-                      ₹ {modalData.medicinePrice}
-                    </span>
-                  </p>
-                  <p className="text-xl">
-                    Category :
-                    <span className="font-bold">{modalData.disease}</span>{" "}
-                  </p>
-                  <p className="text-xl">
-                    Rx Required :{" "}
-                    <span className="font-bold">
-                      {modalData.rxRequired === true ? "Yes" : "No"}
-                    </span>
-                  </p>
-                  <p className="text-xl">
-                    Type : <span className="font-bold">{modalData.type}</span>
-                  </p>
-                  {modalData.description &&
-                    modalData.description.length > 0 && (
-                      <p className="text-xl">
-                        Description :{" "}
-                        <span className="font-bold">
-                          {modalData.description}
-                        </span>
-                      </p>
-                    )}
-                </div>
-               
+
+      <TextField
+        label="Search"
+        variant="outlined"
+        fullWidth
+        value={searchText}
+        onChange={handleSearchTextChange}
+        sx={{ marginBottom: 3 }}
+      />
+
+      <DataGrid
+        rows={medicines}
+        columns={[
+          { field: "medicineName", headerName: "Medicine Name", width: 200 },
+          {
+            field: "medicineCompany",
+            headerName: "Medicine Company",
+            width: 200,
+          },
+          {
+            field: "medicinePrice",
+            headerName: "Price",
+            width: 100,
+            renderCell: (params) => <div>₹ {params.value || 0}</div>,
+          },
+          { field: "disease", headerName: "Category", width: 200 },
+          { field: "rxRequired", headerName: "Rx Required", width: 100 },
+          { field: "type", headerName: "Type", width: 200 },
+          {
+            field: "actions",
+            headerName: "Actions",
+            width: 150,
+            renderCell: (params) => (
+              <div>
+                <IconButton
+                  color="primary"
+                  onClick={() => updateCurrentMedicineHandler(params.row)}
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  color="secondary"
+                  onClick={() => deleteCurrentMedicineHandler(params.row)}
+                >
+                  <DeleteIcon />
+                </IconButton>
               </div>
-           
-            </div>
-          </div>
-           {/* control buttons */}
-           <div style={{display:"flex",flexDirection:"row-reverse",gap:10}}>
-           <Button color="error" variant="contained" 
-           onClick={()=>{deleteCurrentMedicineHandler(modalData)}}>Delete Medicine</Button>
-           <Button color="primary" variant="contained"
-           onClick={()=>{updateCurrentMedicineHandler(modalData)}}>Update Medicine</Button>
-           </div>
-           
-        </Box>
-      </Modal>
+            ),
+          },
+        ]}
+        pageSize={5}
+        pageSizeOptions={[5, 10]}
+        disableSelectionOnClick
+        sx={{ width: "100%" }}
+        getRowId={(row) => row._id}
+        onRowClick={(row) => handleOpen(row.id)}
+      />
+
+      <div className="mt-5 flex justify-end gap-5">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setCurrentPage(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Back
+        </Button>
+
+        <div className="flex items-center">
+          <Typography variant="body1" sx={{ mr: 2 }}>
+            Page {currentPage} of {totalPages}
+          </Typography>
+        </div>
+
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleNextPage}
+          disabled={currentPage >= totalPages}
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 };

@@ -2,11 +2,13 @@ import React, { useEffect, useState } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { TextField } from "@mui/material";
 import axios from "axios";
+import { MyContext } from "Contextapi/MyContext";
 
 const PharmacyDetails = () => {
   const [searchText, setSearchText] = useState("");
   const [tableData, setTableData] = useState([]);
   const [pageSize, setPageSize] = useState(10);
+  const {pharmaciescount , setPharmaciescount} = useState(MyContext)
 
   const handleSearchTextChange = (event) => {
     setSearchText(event.target.value);
@@ -17,6 +19,7 @@ const PharmacyDetails = () => {
       const res = await axios.get("https://api.medstown.com/pharmacy/getpharmacy");
       console.log("API Response:", res.data);
       setTableData(res.data.pharmacies || []);
+      setPharmaciescount(res.data.PharmacyDetails)
     } catch (error) {
       console.error("Error fetching data:", error);
     }

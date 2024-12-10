@@ -12,6 +12,16 @@ import {
 import LineChart from "components/charts/LineChart";
 
 const TotalSpent = () => {
+
+
+
+  
+
+
+
+
+
+
   return (
     <Card extra="!p-[20px] text-center">
       <div className="flex justify-between">
