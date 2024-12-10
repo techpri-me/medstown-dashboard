@@ -1,11 +1,5 @@
-## [1.0.1] 2022-03-07
+# Changelog
 
-🐛 Bugs solved:
+## Unreleased
 
-- Bug with charts being uneven fixed
-
-## [1.0.0] 2023-02-27
-
-### Original Release
-
-- Added Tailwind CSS as base framework
+## Release v1.0.0 2024-12-10
